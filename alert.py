@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from playsound import playsound
-import keyboard
 import time
 import sys
 
@@ -15,9 +14,8 @@ try:
 	while True:
 		print(f"waiting {timi} second.")
 		time.sleep(timi)
-		playsound("beep.mp3")
-		playsound("beep.mp3")
-		playsound("beep.mp3")
+		playsound("beep.wav")
+		playsound("beep.wav")
 except KeyboardInterrupt:
 	print("\rStoping the alert.")
 	sys.stdout.flush()
