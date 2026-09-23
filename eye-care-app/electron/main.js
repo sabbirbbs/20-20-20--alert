@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Notification, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage, shell, screen } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,16 +6,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
+let tray;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 700,
+    title: "Zenith OS",
+    icon: path.join(__dirname, '../build/icon.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     },
-    autoHideMenuBar: true
+    autoHideMenuBar: true,
+    backgroundColor: '#0f172a'
   });
 
   const isDev = !app.isPackaged;
@@ -24,10 +28,47 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  mainWindow.on('close', (event) => {
+    if (!app.isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+    return false;
+  });
+}
+
+function createTray() {
+  // Use the generated icon for the tray
+  const icon = nativeImage.createFromPath(path.join(__dirname, '../build/icon.png')).resize({ width: 16, height: 16 });
+  tray = new Tray(icon);
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show Zenith OS', click: () => mainWindow.show() },
+    { type: 'separator' },
+    { label: 'Quit', click: () => {
+        app.isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+  tray.setToolTip('Zenith OS');
+  tray.setContextMenu(contextMenu);
+  
+  tray.on('click', () => {
+    mainWindow.show();
+  });
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId('com.zenith.os');
+  if (app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: app.getPath('exe')
+    });
+  }
   createWindow();
+  createTray();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -42,52 +83,93 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.on('show-notification', (event, { title, body }) => {
-  new Notification({ title, body }).show();
+app.on('before-quit', () => {
+  app.isQuitting = true;
 });
 
-ipcMain.on('trigger-blink', () => {
-  if (mainWindow) {
-    mainWindow.show();
-    mainWindow.focus();
-    mainWindow.setAlwaysOnTop(true);
-    setTimeout(() => mainWindow.setAlwaysOnTop(false), 20000);
-  }
-
-  // Create a full-screen transparent window for the blink effect
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.bounds;
-
+ipcMain.on('trigger-alert', (event, { title, body }) => {
+  // 1. Play standard system beep
+  shell.beep();
+  
+  // 2. Show Desktop Notification
+  new Notification({ 
+    title, 
+    body,
+    icon: path.join(__dirname, '../build/icon.png')
+  }).show();
+  
+  // 3. Screen Blink Overlay (Aggressive flash)
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   let blinkWin = new BrowserWindow({
-    width,
+    width, 
     height,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    webPreferences: { nodeIntegration: true }
+    focusable: false,
+    hasShadow: false,
+    webPreferences: { nodeIntegration: false }
   });
-
+  
   blinkWin.setIgnoreMouseEvents(true);
-
-  // Load a simple HTML string that flashes and fades out
-  const blinkHtml = `
-    <html style="margin:0; padding:0; width:100%; height:100%; background: transparent;">
-      <body style="margin:0; padding:0; width:100%; height:100%; background: rgba(16, 185, 129, 0.4); animation: fadeOut 1s forwards;">
-        <style>
-          @keyframes fadeOut {
-            0% { opacity: 1; }
-            100% { opacity: 0; }
-          }
-        </style>
-      </body>
-    </html>
-  `;
-  blinkWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(blinkHtml));
-
+  blinkWin.loadURL(`data:text/html;charset=utf-8,
+    <body style="background: rgba(59,130,246,0.25); margin:0; height:100vh; overflow:hidden;"></body>
+  `);
+  
+  blinkWin.showInactive();
+  
   setTimeout(() => {
     if (blinkWin && !blinkWin.isDestroyed()) {
       blinkWin.close();
     }
-  }, 1000);
+  }, 1500); // Flashes the screen blue for 1.5 seconds
 });
+
+ipcMain.on('trigger-20-20', () => {
+  shell.beep();
+  
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  let blockWin = new BrowserWindow({
+    width, 
+    height,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    focusable: true,
+    hasShadow: false,
+    webPreferences: { nodeIntegration: false }
+  });
+  
+  blockWin.setAlwaysOnTop(true, "screen-saver");
+  blockWin.setVisibleOnAllWorkspaces(true);
+  blockWin.setFullScreen(true);
+  
+  blockWin.loadURL(`data:text/html;charset=utf-8,
+    <body style="background: rgba(15, 23, 42, 0.95); margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; overflow:hidden;">
+      <h1 style="font-size: 5rem; margin-bottom: 20px;">Rest Your Eyes</h1>
+      <p style="font-size: 2rem; color: #94a3b8;">Look 20 feet away for 20 seconds.</p>
+      <div id="countdown" style="font-size: 8rem; font-weight: bold; color: #3b82f6; margin-top: 40px;">20</div>
+      <script>
+        let count = 20;
+        setInterval(() => {
+          count--;
+          if (count > 0) {
+            document.getElementById('countdown').innerText = count;
+          }
+        }, 1000);
+      </script>
+    </body>
+  `);
+  
+  blockWin.show();
+  
+  setTimeout(() => {
+    if (blockWin && !blockWin.isDestroyed()) {
+      shell.beep();
+      blockWin.close();
+    }
+  }, 20000); // Closes after 20 seconds
+});
+

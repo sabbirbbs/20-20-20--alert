@@ -1,9 +1,26 @@
 {
-  "name": "eye-care-app",
+  "name": "zenith-productivity",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A productivity OS with an Eisenhower Matrix task manager.",
+  "author": "Sergio",
   "type": "module",
   "main": "electron/main.js",
+  "build": {
+    "appId": "com.zenith.os",
+    "productName": "Zenith OS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on tcp:5173 && electron .\"",
     "build": "vite build && electron-builder",
@@ -11,17 +28,27 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.47.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.7.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
     "concurrently": "^10.0.5",
     "electron": "^44.4.3",
     "electron-builder": "^26.15.3",
     "oxlint": "^1.81.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.3.0",
     "wait-on": "^9.1.0"
   }
