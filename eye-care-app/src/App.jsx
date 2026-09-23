@@ -27,10 +27,11 @@ function App() {
         }
       });
       
-      // Eye Care 20-20-20 Monitor (20 minutes = 1200000 ms)
+      // Eye Care Monitor
       if (state.eyeCare?.enabled) {
         const lastRun = state.eyeCare.lastRun || now;
-        if (now - lastRun >= 1200000) {
+        const intervalMs = (state.eyeCare.intervalMinutes || 20) * 60 * 1000;
+        if (now - lastRun >= intervalMs) {
           ipcRenderer.send('trigger-20-20');
           state.updateEyeCare({ lastRun: now });
         }

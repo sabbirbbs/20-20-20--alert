@@ -10,7 +10,7 @@
     "appId": "com.zenith.os",
     "productName": "Zenith OS",
     "directories": {
-      "output": "release"
+      "output": "build_release"
     },
     "files": [
       "dist/**/*",

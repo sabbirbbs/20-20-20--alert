@@ -23,8 +23,19 @@ export default function Dashboard() {
             <Clock size={24} />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-200">20-20-20 Eye Care Rule</h3>
-            <p className="text-sm text-slate-400">Every 20 mins, look 20 ft away for 20 secs.</p>
+            <h3 className="font-semibold text-slate-200">Eye Care Rule</h3>
+            <div className="flex items-center space-x-2 mt-1">
+              <span className="text-sm text-slate-400">Remind me every</span>
+              <input 
+                type="number"
+                min="1"
+                max="120"
+                value={eyeCare?.intervalMinutes || 20}
+                onChange={(e) => updateEyeCare({ intervalMinutes: parseInt(e.target.value) || 20, lastRun: Date.now() })}
+                className="w-16 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-slate-200 text-center focus:outline-none focus:border-blue-500"
+              />
+              <span className="text-sm text-slate-400">minutes</span>
+            </div>
           </div>
         </div>
         <label className="relative inline-flex items-center cursor-pointer">

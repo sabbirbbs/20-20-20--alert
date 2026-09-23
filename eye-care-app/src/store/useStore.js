@@ -7,6 +7,7 @@ const useStore = create(
       tasks: [],
       eyeCare: {
         enabled: true,
+        intervalMinutes: 20,
         lastRun: Date.now()
       },
       gamification: {
