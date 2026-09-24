@@ -87,7 +87,12 @@ app.on('before-quit', () => {
   app.isQuitting = true;
 });
 
-ipcMain.on('trigger-alert', (event, { title, body }) => {
+ipcMain.on('close-block-win', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) win.close();
+});
+
+ipcMain.on('trigger-alert', (event, { title, body, type, duration }) => {
   // 1. Play standard system beep
   shell.beep();
   
@@ -98,32 +103,55 @@ ipcMain.on('trigger-alert', (event, { title, body }) => {
     icon: path.join(__dirname, '../build/icon.png')
   }).show();
   
-  // 3. Screen Blink Overlay (Aggressive flash)
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  let blinkWin = new BrowserWindow({
-    width, 
-    height,
-    transparent: true,
-    frame: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    focusable: false,
-    hasShadow: false,
-    webPreferences: { nodeIntegration: false }
-  });
-  
-  blinkWin.setIgnoreMouseEvents(true);
-  blinkWin.loadURL(`data:text/html;charset=utf-8,
-    <body style="background: rgba(59,130,246,0.25); margin:0; height:100vh; overflow:hidden;"></body>
-  `);
-  
-  blinkWin.showInactive();
-  
-  setTimeout(() => {
-    if (blinkWin && !blinkWin.isDestroyed()) {
-      blinkWin.close();
-    }
-  }, 1500); // Flashes the screen blue for 1.5 seconds
+  if (type === 'screen-block') {
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    let taskWin = new BrowserWindow({
+      width, height,
+      transparent: true, frame: false, alwaysOnTop: true,
+      skipTaskbar: true, focusable: true, hasShadow: false,
+      webPreferences: { nodeIntegration: true, contextIsolation: false }
+    });
+    taskWin.setAlwaysOnTop(true, "screen-saver");
+    taskWin.setVisibleOnAllWorkspaces(true);
+    taskWin.setFullScreen(true);
+    
+    taskWin.loadURL(`data:text/html;charset=utf-8,
+      <body style="background: rgba(15, 23, 42, 0.95); margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; overflow:hidden; position:relative;">
+        <button id="skip-btn" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Skip (Esc)</button>
+        <h1 style="font-size: 5rem; margin-bottom: 20px;">${title}</h1>
+        <p style="font-size: 2rem; color: #94a3b8;">${body}</p>
+        <div id="countdown" style="font-size: 8rem; font-weight: bold; color: #3b82f6; margin-top: 40px;">${duration || 20}</div>
+        <script>
+          const { ipcRenderer } = require('electron');
+          document.getElementById('skip-btn').addEventListener('click', () => { ipcRenderer.send('close-block-win'); });
+          document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ipcRenderer.send('close-block-win'); });
+          let count = ${duration || 20};
+          setInterval(() => {
+            count--;
+            if (count > 0) document.getElementById('countdown').innerText = count;
+            else ipcRenderer.send('close-block-win');
+          }, 1000);
+        </script>
+      </body>
+    `);
+    taskWin.show();
+    setTimeout(() => { if (taskWin && !taskWin.isDestroyed()) { shell.beep(); taskWin.close(); } }, (duration || 20) * 1000);
+  } else {
+    // 3. Screen Blink Overlay (Aggressive flash)
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    let blinkWin = new BrowserWindow({
+      width, height,
+      transparent: true, frame: false, alwaysOnTop: true,
+      skipTaskbar: true, focusable: false, hasShadow: false,
+      webPreferences: { nodeIntegration: false }
+    });
+    blinkWin.setIgnoreMouseEvents(true);
+    blinkWin.loadURL(`data:text/html;charset=utf-8,
+      <body style="background: rgba(59,130,246,0.25); margin:0; height:100vh; overflow:hidden;"></body>
+    `);
+    blinkWin.showInactive();
+    setTimeout(() => { if (blinkWin && !blinkWin.isDestroyed()) blinkWin.close(); }, 1500);
+  }
 });
 
 ipcMain.on('trigger-20-20', () => {
@@ -139,7 +167,7 @@ ipcMain.on('trigger-20-20', () => {
     skipTaskbar: true,
     focusable: true,
     hasShadow: false,
-    webPreferences: { nodeIntegration: false }
+    webPreferences: { nodeIntegration: true, contextIsolation: false }
   });
   
   blockWin.setAlwaysOnTop(true, "screen-saver");
@@ -153,22 +181,14 @@ ipcMain.on('trigger-20-20', () => {
       <p style="font-size: 2rem; color: #94a3b8;">Look 20 feet away for 20 seconds.</p>
       <div id="countdown" style="font-size: 8rem; font-weight: bold; color: #3b82f6; margin-top: 40px;">20</div>
       <script>
-        document.getElementById('skip-btn').addEventListener('click', () => {
-          window.close();
-        });
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') {
-            window.close();
-          }
-        });
+        const { ipcRenderer } = require('electron');
+        document.getElementById('skip-btn').addEventListener('click', () => { ipcRenderer.send('close-block-win'); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ipcRenderer.send('close-block-win'); });
         let count = 20;
         setInterval(() => {
           count--;
-          if (count > 0) {
-            document.getElementById('countdown').innerText = count;
-          } else {
-            window.close();
-          }
+          if (count > 0) document.getElementById('countdown').innerText = count;
+          else ipcRenderer.send('close-block-win');
         }, 1000);
       </script>
     </body>

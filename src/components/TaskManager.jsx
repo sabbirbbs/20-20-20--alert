@@ -9,6 +9,8 @@ export default function TaskManager() {
   const [isImportant, setIsImportant] = useState(false);
   const [reminderTime, setReminderTime] = useState('');
   const [repeat, setRepeat] = useState('none');
+  const [alertType, setAlertType] = useState('notification');
+  const [alertDuration, setAlertDuration] = useState(20);
 
   const handleAddTask = (e) => {
     e.preventDefault();
@@ -21,6 +23,8 @@ export default function TaskManager() {
       important: isImportant,
       reminderTime: reminderTime || null,
       repeat,
+      alertType,
+      alertDuration,
       completed: false,
       notified: false,
       createdAt: new Date().toISOString()
@@ -28,6 +32,8 @@ export default function TaskManager() {
     setNewTaskTitle('');
     setReminderTime('');
     setRepeat('none');
+    setAlertType('notification');
+    setAlertDuration(20);
   };
 
   const toggleTask = (id, currentStatus) => {
@@ -79,6 +85,8 @@ export default function TaskManager() {
           important: task.important,
           reminderTime: localISOTime,
           repeat: task.repeat,
+          alertType: task.alertType || 'notification',
+          alertDuration: task.alertDuration || 20,
           completed: false,
           notified: false,
           createdAt: new Date().toISOString()
@@ -227,6 +235,30 @@ export default function TaskManager() {
               <option value="weekly" className="bg-slate-800">Weekly</option>
             </select>
           </div>
+
+          <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition-colors text-sm">
+            <select 
+              value={alertType} 
+              onChange={(e) => setAlertType(e.target.value)}
+              className="bg-transparent text-slate-200 focus:outline-none appearance-none"
+            >
+              <option value="notification" className="bg-slate-800">Notification</option>
+              <option value="screen-block" className="bg-slate-800">Screen Block</option>
+            </select>
+          </div>
+
+          {alertType === 'screen-block' && (
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition-colors text-sm">
+              <input 
+                type="number"
+                min="1"
+                value={alertDuration}
+                onChange={(e) => setAlertDuration(parseInt(e.target.value) || 20)}
+                className="w-12 bg-transparent text-slate-200 focus:outline-none text-center"
+              />
+              <span className="text-slate-400">sec</span>
+            </div>
+          )}
           
           <div className="flex-1"></div>
 

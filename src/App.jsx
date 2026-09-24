@@ -21,7 +21,12 @@ function App() {
         if (!task.completed && task.reminderTime && !task.notified) {
           const reminderTimeMs = new Date(task.reminderTime).getTime();
           if (now >= reminderTimeMs) {
-            ipcRenderer.send('trigger-alert', { title: 'Task Reminder', body: task.title });
+            ipcRenderer.send('trigger-alert', { 
+              title: 'Task Reminder', 
+              body: task.title,
+              type: task.alertType || 'notification',
+              duration: task.alertDuration || 20
+            });
             state.updateTask(task.id, { notified: true });
           }
         }
