@@ -147,16 +147,27 @@ ipcMain.on('trigger-20-20', () => {
   blockWin.setFullScreen(true);
   
   blockWin.loadURL(`data:text/html;charset=utf-8,
-    <body style="background: rgba(15, 23, 42, 0.95); margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; overflow:hidden;">
+    <body style="background: rgba(15, 23, 42, 0.95); margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; overflow:hidden; position:relative;">
+      <button id="skip-btn" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Skip (Esc)</button>
       <h1 style="font-size: 5rem; margin-bottom: 20px;">Rest Your Eyes</h1>
       <p style="font-size: 2rem; color: #94a3b8;">Look 20 feet away for 20 seconds.</p>
       <div id="countdown" style="font-size: 8rem; font-weight: bold; color: #3b82f6; margin-top: 40px;">20</div>
       <script>
+        document.getElementById('skip-btn').addEventListener('click', () => {
+          window.close();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            window.close();
+          }
+        });
         let count = 20;
         setInterval(() => {
           count--;
           if (count > 0) {
             document.getElementById('countdown').innerText = count;
+          } else {
+            window.close();
           }
         }, 1000);
       </script>
