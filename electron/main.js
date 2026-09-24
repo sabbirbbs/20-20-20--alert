@@ -117,23 +117,33 @@ ipcMain.on('trigger-alert', (event, { title, body, type, duration }) => {
     
     taskWin.loadURL(`data:text/html;charset=utf-8,
       <body style="background: rgba(15, 23, 42, 0.95); margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; overflow:hidden; position:relative;">
-        <button id="skip-btn" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Skip (Esc)</button>
+        <a href="#close" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; text-decoration: none; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Skip (Esc)</a>
         <h1 style="font-size: 5rem; margin-bottom: 20px;">${title}</h1>
         <p style="font-size: 2rem; color: #94a3b8;">${body}</p>
         <div id="countdown" style="font-size: 8rem; font-weight: bold; color: #3b82f6; margin-top: 40px;">${duration || 20}</div>
         <script>
-          const { ipcRenderer } = require('electron');
-          document.getElementById('skip-btn').addEventListener('click', () => { ipcRenderer.send('close-block-win'); });
-          document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ipcRenderer.send('close-block-win'); });
           let count = ${duration || 20};
           setInterval(() => {
             count--;
             if (count > 0) document.getElementById('countdown').innerText = count;
-            else ipcRenderer.send('close-block-win');
           }, 1000);
         </script>
       </body>
     `);
+    
+    taskWin.webContents.on('will-navigate', (event, url) => {
+      if (url.endsWith('#close')) {
+        event.preventDefault();
+        if (taskWin && !taskWin.isDestroyed()) taskWin.close();
+      }
+    });
+
+    taskWin.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'Escape') {
+        if (taskWin && !taskWin.isDestroyed()) taskWin.close();
+      }
+    });
+
     taskWin.show();
     setTimeout(() => { if (taskWin && !taskWin.isDestroyed()) { shell.beep(); taskWin.close(); } }, (duration || 20) * 1000);
   } else {
@@ -176,24 +186,33 @@ ipcMain.on('trigger-20-20', () => {
   
   blockWin.loadURL(`data:text/html;charset=utf-8,
     <body style="background: rgba(15, 23, 42, 0.95); margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; overflow:hidden; position:relative;">
-      <button id="skip-btn" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Skip (Esc)</button>
+      <a href="#close" style="position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; text-decoration: none; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Skip (Esc)</a>
       <h1 style="font-size: 5rem; margin-bottom: 20px;">Rest Your Eyes</h1>
       <p style="font-size: 2rem; color: #94a3b8;">Look 20 feet away for 20 seconds.</p>
       <div id="countdown" style="font-size: 8rem; font-weight: bold; color: #3b82f6; margin-top: 40px;">20</div>
       <script>
-        const { ipcRenderer } = require('electron');
-        document.getElementById('skip-btn').addEventListener('click', () => { ipcRenderer.send('close-block-win'); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ipcRenderer.send('close-block-win'); });
         let count = 20;
         setInterval(() => {
           count--;
           if (count > 0) document.getElementById('countdown').innerText = count;
-          else ipcRenderer.send('close-block-win');
         }, 1000);
       </script>
     </body>
   `);
-  
+
+  blockWin.webContents.on('will-navigate', (event, url) => {
+    if (url.endsWith('#close')) {
+      event.preventDefault();
+      if (blockWin && !blockWin.isDestroyed()) blockWin.close();
+    }
+  });
+
+  blockWin.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'Escape') {
+      if (blockWin && !blockWin.isDestroyed()) blockWin.close();
+    }
+  });
+
   blockWin.show();
   
   setTimeout(() => {
