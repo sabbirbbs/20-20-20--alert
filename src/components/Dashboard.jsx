@@ -109,10 +109,20 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-slate-800/30 p-6 rounded-3xl border border-slate-700/50">
-          <h3 className="text-xl font-semibold mb-6">Today's Focus</h3>
-          {/* Placeholder for timeline or heatmap */}
-          <div className="h-48 flex items-center justify-center border-2 border-dashed border-slate-700 rounded-xl text-slate-500">
-            Activity Timeline (Coming Soon)
+          <h3 className="text-xl font-semibold mb-6">High Priority (Do First)</h3>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+            {tasks.filter(t => !t.completed && t.important && t.urgent).map(task => (
+              <div key={task.id} className="flex items-center space-x-3 p-4 bg-slate-800/80 rounded-xl border border-rose-500/30 shadow-sm">
+                <div className="w-3 h-3 rounded-full bg-rose-500" />
+                <span className="font-medium text-slate-200">{task.title}</span>
+              </div>
+            ))}
+            {tasks.filter(t => !t.completed && t.important && t.urgent).length === 0 && (
+              <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-700/50 rounded-xl text-slate-500">
+                <p>No critical tasks right now.</p>
+                <p className="text-sm">You are on top of things!</p>
+              </div>
+            )}
           </div>
         </div>
         
